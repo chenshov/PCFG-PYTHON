@@ -238,16 +238,14 @@ class Grammar():
        if rule.isTop:
            self.startSymbols.add(eLHS)
 
-       rule_key = str(rule)
-       if rule_key not  in self.rulesCount:
-           self.rulesCount[rule_key] = 0
+       if rule not  in self.rulesCount:
+           self.rulesCount[rule] = 0
        
-       counter = self.rulesCount[rule_key]
+       counter = self.rulesCount[rule]
        counter = counter + 1
-       self.rulesCount[rule_key] = counter
+       self.rulesCount[rule] = counter
     
     def CalcRulesProbs(self, debug = False):
-        rulesMapCount = dict()
         denomMap = dict()        
         for nonTerm in self.nonTerminalSymbols:
             denom = 0
