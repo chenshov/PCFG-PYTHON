@@ -7,6 +7,8 @@ Created on Fri May 25 16:48:18 2018
 
 import math
 from ckyDecoder import CKYDecoder
+import sys
+
 # Treebank class
 class TreeBank():    
     def __init__(self, trees):
@@ -161,6 +163,9 @@ class Rule():
         s1 = str(self.eLHS)
         s2 = str(self.eRHS)
         return s1 + "--> " + s2
+
+    def __eq__(self, other):
+        return str(self) == str(other)
                
 # class grammar
 class Grammar():
@@ -173,9 +178,12 @@ class Grammar():
         self.lexicalEntries = dict()
         self.startSymbols = set()
         self.rulesCount = dict()
+        i = 1
         for t in treeBank.trees:
+            print "analyze tree " + str(i)
             rules = self.getRules(t)
             self.addAll(rules)
+            i += 1
                 
     def getRules(self, tree):
         rules = []
@@ -229,13 +237,14 @@ class Grammar():
                
        if rule.isTop:
            self.startSymbols.add(eLHS)
-           
-       if  not str(rule) in self.rulesCount:
-           self.rulesCount[rule] = 0
+
+       rule_key = str(rule)
+       if rule_key not  in self.rulesCount:
+           self.rulesCount[rule_key] = 0
        
-       counter = self.rulesCount[rule]
+       counter = self.rulesCount[rule_key]
        counter = counter + 1
-       self.rulesCount[rule] = counter
+       self.rulesCount[rule_key] = counter
     
     def CalcRulesProbs(self, debug = False):
         rulesMapCount = dict()
@@ -253,9 +262,9 @@ class Grammar():
                 print(key)
                 print(denomMap[key])
         for rule in self.rulesCount:
-                nomi = self.rulesCount[rule]
-                denomi = denomMap[rule.eLHS.symbols[0]]
-                rule.minusLogProb = math.log(1.0 * (nomi / denomi))
+                nomi = 1.0 * self.rulesCount[rule]
+                denomi = 1.0 * denomMap[rule.eLHS.symbols[0]]
+                rule.minusLogProb = math.log(nomi / denomi)
                 
 #dummyParser class
 class DummyParser():
@@ -361,14 +370,16 @@ def output(TreeBank, outputFile):
     
 def PCFG(goldFile, trainFile, outputFile, markovOrder):
     gts,tts = parse(goldFile, trainFile, outputFile)
-    grammar = train(tts)
+    print "done parse"
     tts.binarize(markovOrder)
+    print "start train"
+    grammar = train(tts)
+    print "done binarization"
     outputTreeBank = TreeBank([])
     for t in tts:
         outputTreeBank.trees.append(decode(t.root.getYield(),grammar))
-    
     output(outputTreeBank, outputFile)
 
 
-
-
+if __name__ == "__main__":
+    PCFG(sys.argv[1], sys.argv[2], "output.txt", 0)
