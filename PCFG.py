@@ -151,7 +151,7 @@ class Rule():
         self.eRHS = eRHS
         self.isLexical = False        
         self.isTop = False
-        self.minusLogProb = math.inf
+        self.minusLogProb = float('inf')
 
     def __hash__(self):
         s = str(self)
@@ -369,7 +369,6 @@ def PCFG(goldFile, trainFile, outputFile, markovOrder):
     
     output(outputTreeBank, outputFile)
 
-            
-    
-    
-    
+
+
+
