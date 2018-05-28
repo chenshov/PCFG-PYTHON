@@ -332,7 +332,6 @@ def parseTrees(treeFile):
         trees.append(t)
     return TreeBank(trees)
 
-
 def parse(goldFile, trainFile, outputFile, debug = False):
     goldTrees = parseTrees(goldFile)
     trainTrees = parseTrees(trainFile)
@@ -353,3 +352,24 @@ def decode(sentence, grammar):
         return ckyDecoder.GetTree()
     
     return DummyParser(sentence).GetTree()
+
+def output(TreeBank, outputFile):
+     with open(outputFile,'rw') as f:
+         treeBank.deBinarize()
+         for t in TreeBank:
+             f.write(str(t))
+    
+def PCFG(goldFile, trainFile, outputFile, markovOrder):
+    gts,tts = parse(goldFile, trainFile, outputFile)
+    grammar = train(tts)
+    tts.binarize(markovOrder)
+    outputTreeBank = TreeBank([])
+    for t in tts:
+        outputTreeBank.trees.append(decode(t.root.getYield(),grammar))
+    
+    output(outputTreeBank, outputFile)
+
+            
+    
+    
+    
