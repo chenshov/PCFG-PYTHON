@@ -180,7 +180,6 @@ class Grammar():
         self.rulesCount = dict()
         i = 1
         for t in treeBank.trees:
-            print "analyze tree " + str(i)
             rules = self.getRules(t)
             self.addAll(rules)
             i += 1
@@ -244,9 +243,10 @@ class Grammar():
        counter = self.rulesCount[rule]
        counter = counter + 1
        self.rulesCount[rule] = counter
-    
-    def CalcRulesProbs(self, debug = False):
-        denomMap = dict()        
+
+
+    def calc_denominators(self):
+        denomMap = dict()
         for nonTerm in self.nonTerminalSymbols:
             denom = 0
             for rule in self.rulesCount:
@@ -255,6 +255,11 @@ class Grammar():
                         denom = denomMap[rule.eLHS.symbols[0]]
                     denom += self.rulesCount[rule]
                     denomMap[rule.eLHS.symbols[0]] = denom
+        return denomMap
+
+
+    def CalcRulesProbs(self, debug = False):
+        denomMap = self.calc_denominators()
         if debug: 
             for key in denomMap.keys():
                 print(key)
@@ -263,6 +268,43 @@ class Grammar():
                 nomi = 1.0 * self.rulesCount[rule]
                 denomi = 1.0 * denomMap[rule.eLHS.symbols[0]]
                 rule.minusLogProb = math.log(nomi / denomi)
+
+    def calc_nr_values(self):
+        nrCounts = dict()
+        for rule, count in self.rulesCount.items():
+            if count in nrCounts:
+                nrCounts[count] = nrCounts[count] + count
+            else:
+                nrCounts[count] = count
+        return nrCounts
+
+
+    def allCount(self, rulesCount):
+        allCountSum = 0
+        for rule, value in rulesCount.items():
+            allCountSum += value
+        return allCountSum
+
+
+    def getNRValueOrDefault(self, nr_values, nrCount, default = 1.0):
+        if nrCount in nr_values:
+            return 1.0 * nr_values[nrCount]
+        else:
+            return default
+
+
+    def CalcRulesProbsWithSmoothing(self):
+        denomMap = self.calc_denominators()
+        # calc Nr map (the number of n-grams that occur exactly r times)
+        nr_values = self.calc_nr_values()
+        # calc N values
+        sum = self.allCount(self.rulesCount)
+        # calc r* / N:
+        for rule, rCount in self.rulesCount.items():
+            rStar = (rCount + 1) * self.getNRValueOrDefault(nr_values, rCount + 1) / self.getNRValueOrDefault(nr_values, rCount)
+            logProb = math.log(1.0 * rStar / sum)
+            rule.minusLogProb = logProb
+
                 
 #dummyParser class
 class DummyParser():
@@ -351,6 +393,7 @@ def parse(goldFile, trainFile, outputFile, debug = False):
 def train(binaryTreeBank):
     grammar = Grammar(binaryTreeBank)
     grammar.CalcRulesProbs()
+    # grammar.CalcRulesProbsWithSmoothing()
     return grammar
 
 def decode(sentence, grammar):   
