@@ -47,9 +47,9 @@ class CKYDecoder:
         for A in self.nonTerms:
             for B in self.nonTerms:
                 if (A,B) in self.allProds:
-                    prob = self.P[(A,B)] + self.score[(begin,end,B)]
+                    prob = self.P[(A,B)] * self.score[(begin,end,B)]
         
-                    if prob <= self.score[(begin,end,A)]:
+                    if prob > self.score[(begin,end,A)]:
                         self.score[(begin, end, A)] = prob
                         self.backPointers[(begin, end, A)] = (B,)
         
@@ -75,7 +75,7 @@ class CKYDecoder:
             if next in self.terminals:
                 print('in terminals with ' + label)
                 word = self.origText[next[0]]
-                n2 = Node(word, False, None, [])
+                n2 = Node(word, False, None, [], span=(low, high))
                 #p = Node(label,False,None,[n2])
                 #n2.parent = p
                 return n2
@@ -89,8 +89,8 @@ class CKYDecoder:
             next = (low, high, branches[0])
             print('singularNext' + strNext(next))
             singleChild = self._backtrack(next)
-            p = Node(label,False,None, [singleChild])
-            singleChild.parent = p
+            p = Node(label,False,None, [singleChild], (-1,-1))
+            #singleChild.parent = p
             return p
 
         elif len(next) == 3:
@@ -102,8 +102,11 @@ class CKYDecoder:
             print('rightNext' + strNext(next2))
             n1 = self._backtrack(next1)    #left side    
             n2 = self._backtrack(next2) #right side
+            #
+            # spanLow = n1.span[0]
+            # spanHigh = n2.span[1]
 
-            p = Node(label,False,None,[n1,n2])
+            p = Node(label,False,None,[n1,n2], span=(-1, -1))
             return p
 
 
@@ -145,9 +148,9 @@ class CKYDecoder:
                             B = rhs[0].strip()
                             C = rhs[1].strip()
 
-                            prob = self.score[(begin,split,B)] + self.score[(split, end, C)] + self.P[(A, X)]
+                            prob = self.score[(begin,split,B)] * self.score[(split, end, C)] + self.P[(A, X)]
 
-                            if prob <= self.score[(begin, end,  A)]:
+                            if prob > self.score[(begin, end,  A)]:
                                 self.score[(begin, end, A)] = prob
                                 self.backPointers[(begin, end, A)] = (split, B, C)
 
@@ -181,11 +184,12 @@ class Node():
             s = s.replace(")(",") (")
         return s
 
-    def __init__(self, id, isRoot, parent, children):
+    def __init__(self, id, isRoot, parent, children, span):
         self.children = children
         self.parent = parent
         self.isRoot = isRoot
         self.id = id
+        self.span = span
 
     def addChild(self,childNode):
         self.children.append(childNode)

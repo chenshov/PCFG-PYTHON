@@ -163,7 +163,7 @@ class Grammar():
         for rule in self.rulesCount:
                 nomi = 1.0 * self.rulesCount[rule]
                 denomi = 1.0 * denomMap[rule.eLHS.symbols[0]]
-                rule.minusLogProb = -math.log(nomi / denomi)
+                rule.minusLogProb = (nomi / denomi)#-math.log(nomi / denomi)
 
     def calc_nr_values(self):
         nrCounts = dict()
@@ -198,7 +198,7 @@ class Grammar():
         # calc r* / N:
         for rule, rCount in self.rulesCount.items():
             rStar = (rCount + 1) * self.getNRValueOrDefault(nr_values, rCount + 1) / self.getNRValueOrDefault(nr_values, rCount)
-            logProb = -math.log(1.0 * rStar / sum)
+            logProb = (1.0 * rStar / sum)#-math.log(1.0 * rStar / sum)
             rule.minusLogProb = logProb
 
                 
@@ -228,7 +228,7 @@ def printTreeDebug(root, level):
 #parse pme tree according to reut
 def parseTree(treeLine, debug = False):
     s = []
-    root = Node("TOP",True,None,[])
+    root = Node("TOP",True,None,[], span=(-1, -1))
     s.insert(0,root)
     treeLine = treeLine[4:] # cutting the (TOP
     tokensList = treeLine.split(" ")    
@@ -237,7 +237,7 @@ def parseTree(treeLine, debug = False):
     for token in tokensList :
         if(token.startswith("(")):
             n = s.pop(0)
-            n2 = Node(token[1:],False,n,[])
+            n2 = Node(token[1:],False,n,[], span=(-1, -1))
             n.addChild(n2)
             s.insert(0,n)
             s.insert(0,n2)
@@ -248,7 +248,7 @@ def parseTree(treeLine, debug = False):
             continue
         if(token.endswith(")")):
             t,t2 = token[:token.index(")")] ,token[token.index(')'):]
-            n2 = Node(t,False,n,[])
+            n2 = Node(t,False,n,[], span=(-1, -1))
             n = s.pop(0)
             n.addChild(n2)
             for c in t2[1:]:
@@ -259,7 +259,7 @@ def parseTree(treeLine, debug = False):
                 print(n2.id)            
             continue
         n = s.pop(0)
-        n.addChild(Node(token,False,n,[]))
+        n.addChild(Node(token,False,n,[]), span=(-1, -1))
         s.insert(0,n) 
         if debug:
             print('space')
