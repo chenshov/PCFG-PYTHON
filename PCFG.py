@@ -163,7 +163,7 @@ class Grammar():
         for rule in self.rulesCount:
                 nomi = 1.0 * self.rulesCount[rule]
                 denomi = 1.0 * denomMap[rule.eLHS.symbols[0]]
-                rule.minusLogProb = -math.log(nomi / denomi)
+                rule.minusLogProb = (nomi / denomi)
 
     def calc_nr_values(self):
         nrCounts = dict()
@@ -302,7 +302,7 @@ def decode(sentence, grammar):
 def output(treeBank, outputFile):
      with open(outputFile,'w') as f:
          treeBank.deBinarize()
-         for t in TreeBank:
+         for t in treeBank.trees:
              f.write(str(t))
     
 def PCFG(goldFile, trainFile, outputFile, markovOrder):
@@ -313,10 +313,7 @@ def PCFG(goldFile, trainFile, outputFile, markovOrder):
     grammar = train(tts)
     print ("done binarization")
     outputTreeBank = TreeBank([])
-    for t in tts.trees:
+    for t in gts.trees:
         outputTreeBank.trees.append(decode(t.root.getYield(),grammar))
     output(outputTreeBank, outputFile)
 
-
-if __name__ == "__main__":
-    PCFG(sys.argv[1], sys.argv[2], "output.txt", 0)

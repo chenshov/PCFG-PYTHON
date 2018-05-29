@@ -47,7 +47,7 @@ class CKYDecoder:
         for A in self.nonTerms:
             for B in self.nonTerms:
                 if (A,B) in self.allProds:
-                    prob = self.P[(A,B)] + self.score[(begin,end,B)]
+                    prob = self.P[(A,B)] * self.score[(begin,end,B)]
         
                     if prob > self.score[(begin,end,A)]:
                         self.score[(begin, end, A)] = prob
@@ -197,7 +197,7 @@ class CKYDecoder:
                             B = rhs[0].strip()
                             C = rhs[1].strip()
 
-                            prob = self.score[(begin,split,B)] + self.score[(split, end, C)] + self.P[(A, X)]
+                            prob = self.score[(begin,split,B)] * self.score[(split, end, C)] * self.P[(A, X)]
 
                             if prob > self.score[(begin, end,  A)]:
                                 self.score[(begin, end, A)] = prob
@@ -207,7 +207,7 @@ class CKYDecoder:
                 self.addUnary(begin,end)
 
         print('Done')
-        return self.stack_backtrack(len(self.text))
+        return self.backtrack(len(self.text))
         
 #Node class
 class Node():
@@ -324,8 +324,3 @@ class Tree():
         self.root.deBinarize()
 
 
-if __name__ == "__main__":
-    
-    for line in sys.stdin:
-        s = CKYSolver(line.strip())
-        s.compute()
