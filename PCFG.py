@@ -299,19 +299,19 @@ def decode(sentence, grammar):
     
     return DummyParser(sentence).GetTree()
 
-def output(TreeBank, outputFile):
-     with open(outputFile,'rw') as f:
+def output(treeBank, outputFile):
+     with open(outputFile,'w') as f:
          treeBank.deBinarize()
          for t in TreeBank:
              f.write(str(t))
     
 def PCFG(goldFile, trainFile, outputFile, markovOrder):
     gts,tts = parse(goldFile, trainFile, outputFile)
-    print "done parse"
+    print ("done parse")
     tts.binarize(markovOrder)
-    print "start train"
+    print ("start train")
     grammar = train(tts)
-    print "done binarization"
+    print ("done binarization")
     outputTreeBank = TreeBank([])
     for t in tts.trees:
         outputTreeBank.trees.append(decode(t.root.getYield(),grammar))

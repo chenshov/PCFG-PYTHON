@@ -62,18 +62,69 @@ class CKYDecoder:
         node = self._backtrack((0,n,'S'))
         return node
 
+    def stack_backtrack(self, n):
+        if (0,n,'S') not in self.backPointers:
+            #print "NONE"
+            return None
+        top = Node('TOP', True, None, [])
+        stack = [((0,n,'S'), top)]
+
+        while not stack == []:
+            current, root = stack.pop()
+            low = current[0]
+            high = current[1]
+            label = current[2]
+
+            if current not in self.backPointers:
+                if current in self.terminals:
+                    # print('in terminals with ' + label)
+                    word = self.origText[current[0]]
+                    n2 = Node(word, False, root, [])
+                    root.setChildren([n2])
+                    continue
+                root.setChildren([None])
+                continue
+
+
+            branches = self.backPointers[current]
+            if len(branches) == 1:
+                next = (low, high, branches[0])
+                # print('singularNext' + strNext(next))
+                ch = Node(branches[0], False, root, [])
+                stack.append((next, ch))
+                root.setChildren([ch])
+                continue
+
+            elif len(current) == 3:
+                (split, left, right) = branches
+                next1 = (low, split, left)
+                next2 = (split, high, right)
+
+                # print('leftNext' + strNext(next1))
+                # print('rightNext' + strNext(next2))
+                ch1 = Node(left, False, root, [])
+                ch2 = Node(right, False, root, [])
+                root.setChildren([ch1, ch2])
+                stack.append((next2, ch2))
+                stack.append((next1, ch1))
+                continue
+
+        if top.isLegal():
+            return top
+        else:
+            None
 
     def _backtrack(self, next):
 
         low = next[0]
         high = next[1]
         label = next[2]
-        print('start'+ strNext(next))
+        # print('start'+ strNext(next))
         # If this doesn't map to anything, then the search has ended, and it should map to a terminal
         # create a tree node and return the terminal
         if next not in self.backPointers:
             if next in self.terminals:
-                print('in terminals with ' + label)
+                #print('in terminals with ' + label)
                 word = self.origText[next[0]]
                 n2 = Node(word, False, None, [])
                 p = Node(label,False,None,[n2])
@@ -87,7 +138,7 @@ class CKYDecoder:
         #so provide the same low and high for B and send it off to next prodction 
         if len(branches) == 1:
             next = (low, high, branches[0])
-            print('singularNext' + strNext(next))
+            #print('singularNext' + strNext(next))
             singleChild = self._backtrack(next)
             p = Node(label,False,None, [singleChild])
             singleChild.parent = p
@@ -98,15 +149,13 @@ class CKYDecoder:
             next1 = (low, split, left)
             next2 = (split, high, right)
 
-            print('leftNext' + strNext(next1))
-            print('rightNext' + strNext(next2))
+            #print('leftNext' + strNext(next1))
+            #print('rightNext' + strNext(next2))
             n1 = self._backtrack(next1)    #left side    
             n2 = self._backtrack(next2) #right side
-            #
-            # spanLow = n1.span[0]
-            # spanHigh = n2.span[1]
-
             p = Node(label,False,None,[n1,n2])
+            n1.parent = p
+            n2.parent = p
             return p
 
 
@@ -158,11 +207,7 @@ class CKYDecoder:
                 self.addUnary(begin,end)
 
         print('Done')
-        s = self.backtrack(len(self.text))
-        if s is not None:
-            return Node("TOP", True, None, [s])
-        else:
-            None
+        return self.stack_backtrack(len(self.text))
         
 #Node class
 class Node():
@@ -184,6 +229,9 @@ class Node():
             s = s.replace(")(",") (")
         return s
 
+    def isLegal(self):
+        return self is not None and self.children is not None and self.children is not [] and len(self.children) > 0
+
     def __init__(self, id, isRoot, parent, children):
         self.children = children
         self.parent = parent
@@ -192,6 +240,9 @@ class Node():
 
     def addChild(self,childNode):
         self.children.append(childNode)
+
+    def setChildren(self, children):
+        self.children = children
 
     def getYield(self):
         l = []
