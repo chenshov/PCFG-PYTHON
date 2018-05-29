@@ -9,6 +9,8 @@ from __future__ import division
 import sys
 from collections import defaultdict
 
+
+
 def strNext(a):
     return ' (' + str(a[0])  +',' + str(a[1]) + ',' + str(a[2]) + ')'
 
@@ -47,7 +49,7 @@ class CKYDecoder:
                 if (A,B) in self.allProds:
                     prob = self.P[(A,B)] + self.score[(begin,end,B)]
         
-                    if prob < self.score[(begin,end,A)]:
+                    if prob <= self.score[(begin,end,A)]:
                         self.score[(begin, end, A)] = prob
                         self.backPointers[(begin, end, A)] = (B,)
         
@@ -72,12 +74,11 @@ class CKYDecoder:
         if next not in self.backPointers:
             if next in self.terminals:
                 print('in terminals with ' + label)
-                word = self.origText[next[0]]                
+                word = self.origText[next[0]]
                 n2 = Node(word, False, None, [])
-                p = Node(label,False,None,[n2])
-                n2.parent = p
-                return p
-        
+                #p = Node(label,False,None,[n2])
+                #n2.parent = p
+                return n2
             return None
         
         #branches is of the form (split_location, Left nonterm, Right nonterm)
@@ -88,7 +89,7 @@ class CKYDecoder:
             next = (low, high, branches[0])
             print('singularNext' + strNext(next))
             singleChild = self._backtrack(next)
-            p = Node(label,False,None [singleChild])
+            p = Node(label,False,None, [singleChild])
             singleChild.parent = p
             return p
 
@@ -146,7 +147,7 @@ class CKYDecoder:
 
                             prob = self.score[(begin,split,B)] + self.score[(split, end, C)] + self.P[(A, X)]
 
-                            if prob < self.score[(begin, end,  A)]:
+                            if prob <= self.score[(begin, end,  A)]:
                                 self.score[(begin, end, A)] = prob
                                 self.backPointers[(begin, end, A)] = (split, B, C)
 
@@ -160,7 +161,113 @@ class CKYDecoder:
         else:
             None
         
+#Node class
+class Node():
+    def __init__(self):
+        self.children = []
+        self.parent = None
+        self.isRoot = False
+        self.id = None
 
+    def __str__(self):
+        if len(self.children) == 0:
+            return self.id
+
+        s = "(" + self.id + " "
+        for n in self.children:
+            s += str(n)
+        s += ")"
+        if s.startswith('(TOP'):
+            s = s.replace(")(",") (")
+        return s
+
+    def __init__(self, id, isRoot, parent, children):
+        self.children = children
+        self.parent = parent
+        self.isRoot = isRoot
+        self.id = id
+
+    def addChild(self,childNode):
+        self.children.append(childNode)
+
+    def getYield(self):
+        l = []
+        if len(self.children) == 0:
+            l.append(self.id)
+        for child in self.children:
+            childList = child.getYield()
+            l += childList
+        return l
+
+    def getNodes(self):
+        lst = [self]
+        for n in self.children:
+            lst2 = n.getNodes()
+            lst = lst + lst2
+        return lst
+
+    def isInternal(self):
+        return not self.isRoot and len(self.children) > 0
+
+    def isPreTerminal(self):
+        if len(self.children) == 0:
+            return false
+        return len(self.children[0].children) == 0
+
+    def binarize(self,order):
+        if order > -1:
+            if len(self.children) > 2:
+                markovOrderId = ""
+                for i in range(0,order):
+                    markovOrderId += self.children[i].id + "/"
+                if order > 0:
+                    if "@" not in self.id:
+                        newId = self.id + "@/"  + markovOrderId
+                    else:
+                         newId = self.id + markovOrderId
+                else:
+                    if "@" not in self.id:
+                        newId = self.id + "@//"
+                    else:
+                        newId = self.id
+
+                n2 = Node(newId,False,self, self.children[1:])
+                for child in self.children[1:]:
+                    child.parent = n2
+                self.children = [self.children[0], n2]
+
+
+            for child in self.children:
+                child.binarize(order)
+
+    def deBinarize(self):
+        if len(self.children) == 2:
+            while "@" in self.children[-1].id:
+                rightChild = self.children[-1]
+                rightChildId = rightChild.id
+
+                if "@" in rightChildId:
+                    self.children.pop(-1)
+                    self.children = self.children + rightChild.children
+                    for innerChild in rightChild.children:
+                        innerChild.parent = self
+        for child in self.children:
+            child.deBinarize()
+
+
+# Tree class
+class Tree():
+    def __init__(self, root):
+        self.root = root
+
+    def __str__(self):
+        return str(self.root)
+
+    def binarize(self, order):
+        self.root.binarize(order)
+
+    def deBinarize(self):
+        self.root.deBinarize()
 
 
 if __name__ == "__main__":

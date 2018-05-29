@@ -5,12 +5,14 @@ Created on Fri May 25 16:48:18 2018
 @author: Chensho
 """
 
-from ckyDecoder import CKYDecoder
+from ckyDecoder import *
 import math
 import sys
 
 # Treebank class
-class TreeBank():    
+
+
+class TreeBank():
     def __init__(self, trees):
         self.trees = trees
         
@@ -28,113 +30,7 @@ class TreeBank():
         for t in self.trees:
             t.deBinarize()
 
-#Tree class
-class Tree():    
-    def __init__(self,root):
-        self.root = root
-        
-    def __str__(self):
-        return str(self.root)
-    
-    def binarize(self, order):
-        self.root.binarize(order)
-        
-    def deBinarize(self):
-        self.root.deBinarize()
-                  
-#Node class
-class Node():
-    def __init__(self):
-        self.children = []
-        self.parent = None
-        self.isRoot = False
-        self.id = None
-        
-    def __str__(self):
-        if len(self.children) == 0:
-            return self.id
-        
-        s = "(" + self.id + " "
-        for n in self.children:            
-            s += str(n)
-        s += ")"  
-        if s.startswith('(TOP'):
-            s = s.replace(")(",") (")
-        return s
-            
-    def __init__(self, id, isRoot, parent, children):
-        self.children = children
-        self.parent = parent
-        self.isRoot = isRoot
-        self.id = id
-        
-    def addChild(self,childNode):
-        self.children.append(childNode)
-        
-    def getYield(self):
-        l = []
-        if len(self.children) == 0:
-            l.append(self.id)
-        for child in self.children:
-            childList = child.getYield()
-            l += childList
-        return l
-    
-    def getNodes(self):
-        lst = [self]
-        for n in self.children:
-            lst2 = n.getNodes()
-            lst = lst + lst2
-        return lst
-    
-    def isInternal(self):
-        return not self.isRoot and len(self.children) > 0
-    
-    def isPreTerminal(self):
-        if len(self.children) == 0:
-            return false
-        return len(self.children[0].children) == 0
-    
-    def binarize(self,order):
-        if order > -1:           
-            if len(self.children) > 2:
-                markovOrderId = ""
-                for i in range(0,order):
-                    markovOrderId += self.children[i].id + "/"
-                if order > 0:  
-                    if "@" not in self.id:                    
-                        newId = self.id + "@/"  + markovOrderId
-                    else:
-                         newId = self.id + markovOrderId
-                else:
-                    if "@" not in self.id:
-                        newId = self.id + "@//"
-                    else:
-                        newId = self.id
-                        
-                n2 = Node(newId,False,self, self.children[1:])   
-                for child in self.children[1:]:
-                    child.parent = n2
-                self.children = [self.children[0], n2]
 
-
-            for child in self.children:
-                child.binarize(order)
-                
-    def deBinarize(self):
-        if len(self.children) == 2:
-            while "@" in self.children[-1].id:
-                rightChild = self.children[-1]
-                rightChildId = rightChild.id
-
-                if "@" in rightChildId:
-                    self.children.pop(-1)
-                    self.children = self.children + rightChild.children 
-                    for innerChild in rightChild.children:
-                        innerChild.parent = self
-        for child in self.children:            
-            child.deBinarize()
-     
 #class event        
 class Event():
     def __init__(self,symbols):
@@ -267,7 +163,7 @@ class Grammar():
         for rule in self.rulesCount:
                 nomi = 1.0 * self.rulesCount[rule]
                 denomi = 1.0 * denomMap[rule.eLHS.symbols[0]]
-                rule.minusLogProb = math.log(nomi / denomi)
+                rule.minusLogProb = -math.log(nomi / denomi)
 
     def calc_nr_values(self):
         nrCounts = dict()
@@ -302,7 +198,7 @@ class Grammar():
         # calc r* / N:
         for rule, rCount in self.rulesCount.items():
             rStar = (rCount + 1) * self.getNRValueOrDefault(nr_values, rCount + 1) / self.getNRValueOrDefault(nr_values, rCount)
-            logProb = math.log(1.0 * rStar / sum)
+            logProb = -math.log(1.0 * rStar / sum)
             rule.minusLogProb = logProb
 
                 
