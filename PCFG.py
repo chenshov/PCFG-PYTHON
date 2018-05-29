@@ -228,7 +228,7 @@ def printTreeDebug(root, level):
 #parse pme tree according to reut
 def parseTree(treeLine, debug = False):
     s = []
-    root = Node("TOP",True,None,[], span=(-1, -1))
+    root = Node("TOP",True,None,[])
     s.insert(0,root)
     treeLine = treeLine[4:] # cutting the (TOP
     tokensList = treeLine.split(" ")    
@@ -237,7 +237,7 @@ def parseTree(treeLine, debug = False):
     for token in tokensList :
         if(token.startswith("(")):
             n = s.pop(0)
-            n2 = Node(token[1:],False,n,[], span=(-1, -1))
+            n2 = Node(token[1:],False,n,[])
             n.addChild(n2)
             s.insert(0,n)
             s.insert(0,n2)
@@ -248,7 +248,7 @@ def parseTree(treeLine, debug = False):
             continue
         if(token.endswith(")")):
             t,t2 = token[:token.index(")")] ,token[token.index(')'):]
-            n2 = Node(t,False,n,[], span=(-1, -1))
+            n2 = Node(t,False,n,[])
             n = s.pop(0)
             n.addChild(n2)
             for c in t2[1:]:

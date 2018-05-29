@@ -75,8 +75,8 @@ class CKYDecoder:
             if next in self.terminals:
                 print('in terminals with ' + label)
                 word = self.origText[next[0]]
-                n2 = Node(word, False, None, [], span=(low, high))
-                p = Node(label,False,None,[n2], span=(low, high))
+                n2 = Node(word, False, None, [])
+                p = Node(label,False,None,[n2])
                 n2.parent = p
                 return p
             return None
@@ -89,7 +89,7 @@ class CKYDecoder:
             next = (low, high, branches[0])
             print('singularNext' + strNext(next))
             singleChild = self._backtrack(next)
-            p = Node(label,False,None, [singleChild], (-1,-1))
+            p = Node(label,False,None, [singleChild])
             singleChild.parent = p
             return p
 
@@ -106,7 +106,7 @@ class CKYDecoder:
             # spanLow = n1.span[0]
             # spanHigh = n2.span[1]
 
-            p = Node(label,False,None,[n1,n2], span=(-1, -1))
+            p = Node(label,False,None,[n1,n2])
             return p
 
 
@@ -184,12 +184,11 @@ class Node():
             s = s.replace(")(",") (")
         return s
 
-    def __init__(self, id, isRoot, parent, children, span):
+    def __init__(self, id, isRoot, parent, children):
         self.children = children
         self.parent = parent
         self.isRoot = isRoot
         self.id = id
-        self.span = span
 
     def addChild(self,childNode):
         self.children.append(childNode)
