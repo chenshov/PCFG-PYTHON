@@ -79,9 +79,10 @@ class Grammar():
             rules = self.getRules(t)
             self.addAll(rules)
             i += 1
+            print("train: tree " + str(i))
                 
     def getRules(self, tree):
-        rules = []
+        rules = set()
         nodes = tree.root.getNodes()
         for n in nodes:            
             if n.isInternal():                
@@ -97,7 +98,7 @@ class Grammar():
                     rule.isLexical = True
                 if n.parent is not None and n.parent.id == 'TOP': #root rule
                     rule.isTopRule = True
-                rules.append(rule)
+                rules.add(rule)
          
         return rules
     
@@ -292,10 +293,13 @@ def train(binaryTreeBank):
     # grammar.CalcRulesProbsWithSmoothing()
     return grammar
 
+
 def decode(sentence, grammar):   
     ckyDecoder = CKYDecoder(sentence, grammar)
     if ckyDecoder.success:
-        return ckyDecoder.GetTree(grammar)
+        tree = ckyDecoder.GetTree(grammar)
+        top = Node("TOP", True, None, [tree])
+        return top
     
     return DummyParser(sentence).GetTree()
 
@@ -304,16 +308,20 @@ def output(treeBank, outputFile):
          treeBank.deBinarize()
          for t in treeBank.trees:
              f.write(str(t))
-    
+
 def PCFG(goldFile, trainFile, outputFile, markovOrder):
     gts,tts = parse(goldFile, trainFile, outputFile)
-    print ("done parse")
+    print("done parse")
     tts.binarize(markovOrder)
-    print ("start train")
+    print("done binarization")
     grammar = train(tts)
-    print ("done binarization")
+    print("done train")
     outputTreeBank = TreeBank([])
     for t in gts.trees:
-        outputTreeBank.trees.append(decode(t.root.getYield(),grammar))
+        tree = decode(t.root.getYield(), grammar)
+        outputTreeBank.trees.append(tree)
     output(outputTreeBank, outputFile)
 
+
+if __name__ == "__main__":
+    PCFG(sys.argv[1], sys.argv[2], "output.txt", 0)

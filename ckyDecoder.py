@@ -26,6 +26,7 @@ class CKYDecoder:
         self.text = text       	 #the list of words
         self.origText = list(text)  #list of words, not mutated, to replace "unk" later
         self.g = g
+        self.unaryRules = dict()
 
         #if we know the list of words that occur multiple times, then replace single occurrences with "<unk>"
         #but keep track of words that we replace, so that final tree has original words
@@ -41,18 +42,49 @@ class CKYDecoder:
 
 
     def addUnary(self,begin, end):
+        possible = []
         '''
         Adds unary productions A -> B. These need to be handled differently, since the algo splits B,C in A->BC
         '''
         for A in self.nonTerms:
             for B in self.nonTerms:
                 if (A,B) in self.allProds:
+                    possible.append((A,B))
                     prob = self.P[(A,B)] * self.score[(begin,end,B)]
         
                     if prob > self.score[(begin,end,A)]:
                         self.score[(begin, end, A)] = prob
                         self.backPointers[(begin, end, A)] = (B,)
-        
+
+        print ("ds")
+
+    def addMinimizeUnary(self, begin, end, possibleNonTerminals, additionalSymbols):
+        '''
+        Adds unary productions A -> B. These need to be handled differently, since the algo splits B,C in A->BC
+        '''
+        my_list = list(possibleNonTerminals)
+        for nonTer in my_list:
+            if nonTer in self.unaryRules and additionalSymbols[nonTer] == 0:
+                setOfAllLHS = self.unaryRules[nonTer]
+                for LHS in setOfAllLHS:
+                    if (LHS, nonTer) in self.allProds:
+                        if LHS not in additionalSymbols:
+                            additionalSymbols[LHS] = 0
+                            my_list.append(LHS)
+                            prob = self.P[(LHS, nonTer)] * self.score[(begin, end, nonTer)]
+
+                            if prob > self.score[(begin, end, LHS)]:
+                                self.score[(begin, end, LHS)] = prob
+                                self.backPointers[(begin, end, LHS)] = (nonTer,)
+                additionalSymbols[nonTer] = 1
+        # for A in self.nonTerms:
+        #     for B in self.nonTerms:
+        #         if (A, B) in self.allProds:
+        #             prob = self.P[(A, B)] * self.score[(begin, end, B)]
+        #
+        #             if prob > self.score[(begin, end, A)]:
+        #                 self.score[(begin, end, A)] = prob
+        #                 self.backPointers[(begin, end, A)] = (B,)
     
     def backtrack(self, n):
         if (0,n,'S') not in self.backPointers:
@@ -167,6 +199,12 @@ class CKYDecoder:
             b = str(r.eRHS).strip()
             self.allProds.add((a,b))
             self.P[(a,b)] = prob
+            if len(r.eRHS.symbols) == 1 and not r.isLexical:  # unary rule
+                if r.eRHS not in self.unaryRules and r.eRHS not in self.terminals:
+                    self.unaryRules[r.eRHS.symbols[0]] = set()
+                setOfLHS = self.unaryRules[r.eRHS.symbols[0]]
+                setOfLHS.add(r.eLHS.symbols[0])
+
         
         self.nonTerms = sorted(list(self.nonTerms))
 
@@ -175,23 +213,31 @@ class CKYDecoder:
         for i in range(0,n):
             begin = i
             end = i + 1
-
+            possible_nonTerminals = set()
+            additional_symbols = dict()
             for A in self.nonTerms:
                 word = self.text[begin]
 
                 if (A,word) in self.allProds:
                     self.score[(begin,end,A)] = self.P[(A, word)]
                     self.terminals[(begin,end,A)] = word
+                    possible_nonTerminals.add(A)
+                    additional_symbols[A] = 0
 
 
-            self.addUnary(begin,end)
+            self.addMinimizeUnary(begin,end, possible_nonTerminals, additional_symbols)
+            #self.addUnary(begin, end)
 
         for span in range(2,n+1):
             for begin in range(0,n-span+1):
                 end = begin + span
+                possible_nonTerminals = set()
+                additional_symbols = dict()
                 for split in range(begin+1,end):
 
                     for A,X in self.allProds:
+                        possible_nonTerminals.add(A)
+                        additional_symbols[A] = 0
                         rhs = X.split()
                         if len(rhs) == 2:
                             B = rhs[0].strip()
@@ -204,7 +250,7 @@ class CKYDecoder:
                                 self.backPointers[(begin, end, A)] = (split, B, C)
 
 
-                self.addUnary(begin,end)
+                self.addMinimizeUnary(begin,end, possible_nonTerminals, additional_symbols)
 
         print('Done')
         return self.backtrack(len(self.text))
