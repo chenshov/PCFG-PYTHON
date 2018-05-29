@@ -76,9 +76,9 @@ class CKYDecoder:
                 print('in terminals with ' + label)
                 word = self.origText[next[0]]
                 n2 = Node(word, False, None, [], span=(low, high))
-                #p = Node(label,False,None,[n2])
-                #n2.parent = p
-                return n2
+                p = Node(label,False,None,[n2], span=(low, high))
+                n2.parent = p
+                return p
             return None
         
         #branches is of the form (split_location, Left nonterm, Right nonterm)
@@ -90,7 +90,7 @@ class CKYDecoder:
             print('singularNext' + strNext(next))
             singleChild = self._backtrack(next)
             p = Node(label,False,None, [singleChild], (-1,-1))
-            #singleChild.parent = p
+            singleChild.parent = p
             return p
 
         elif len(next) == 3:
