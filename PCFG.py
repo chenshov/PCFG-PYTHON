@@ -163,7 +163,7 @@ class Grammar():
         for rule in self.rulesCount:
                 nomi = 1.0 * self.rulesCount[rule]
                 denomi = 1.0 * denomMap[rule.eLHS.symbols[0]]
-                rule.minusLogProb = (nomi / denomi)#-math.log(nomi / denomi)
+                rule.minusLogProb = -math.log(nomi / denomi)
 
     def calc_nr_values(self):
         nrCounts = dict()
