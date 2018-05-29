@@ -8,12 +8,11 @@ Created on Sat May 26 20:37:37 2018
 from __future__ import division
 import sys
 from collections import defaultdict
-import re
-import itertools
-import PCFG
 
 def strNext(a):
     return ' (' + str(a[0])  +',' + str(a[1]) + ',' + str(a[2]) + ')'
+
+
 class CKYDecoder:
     def __init__(self, text,g):
         self.nonTerms = set()            #set of non terminals
@@ -24,6 +23,7 @@ class CKYDecoder:
         self.terminals = {}              #maps best non terminal to terminal ("word")
         self.text = text       	 #the list of words
         self.origText = list(text)  #list of words, not mutated, to replace "unk" later
+        self.g = g
 
         #if we know the list of words that occur multiple times, then replace single occurrences with "<unk>"
         #but keep track of words that we replace, so that final tree has original words
@@ -34,6 +34,7 @@ class CKYDecoder:
                 self.text[i] = "<unk>"
 
         self.n = len(self.text)
+        self.success = True
 
 
 
@@ -103,11 +104,9 @@ class CKYDecoder:
 
             p = Node(label,False,None,[n1,n2])
             return p
-        
 
 
-
-    def GetTree(self):
+    def GetTree(self, g):
         self.nonTerms = g.nonTerminalSymbols
         for r in g.rulesCount:
             prob = r.minusLogProb    

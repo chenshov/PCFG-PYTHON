@@ -5,8 +5,8 @@ Created on Fri May 25 16:48:18 2018
 @author: Chensho
 """
 
-import math
 from ckyDecoder import CKYDecoder
+import math
 import sys
 
 # Treebank class
@@ -399,7 +399,7 @@ def train(binaryTreeBank):
 def decode(sentence, grammar):   
     ckyDecoder = CKYDecoder(sentence, grammar)
     if ckyDecoder.success:
-        return ckyDecoder.GetTree()
+        return ckyDecoder.GetTree(grammar)
     
     return DummyParser(sentence).GetTree()
 
@@ -417,7 +417,7 @@ def PCFG(goldFile, trainFile, outputFile, markovOrder):
     grammar = train(tts)
     print "done binarization"
     outputTreeBank = TreeBank([])
-    for t in tts:
+    for t in tts.trees:
         outputTreeBank.trees.append(decode(t.root.getYield(),grammar))
     output(outputTreeBank, outputFile)
 
