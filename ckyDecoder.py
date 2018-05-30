@@ -16,22 +16,12 @@ def strNext(a):
 
 
 class CKYDecoder:
-    def __init__(self, text,g):
-        self.nonTerms = set()            #set of non terminals
-        self.allProds = set()            #set of all productions
-        self.P = defaultdict(float)      #probabilities of productions
-        self.score = defaultdict(float)  #n^2|G| matrix to store DP results
-        self.backPointers = {}           #to back track
-        self.terminals = {}              #maps best non terminal to terminal ("word")
-        self.text = text       	 #the list of words
-        self.origText = list(text)  #list of words, not mutated, to replace "unk" later
-        self.g = g
+    def set_text(self, text):
+        self.text = text  # the list of words
+        self.origText = list(text)  # list of words, not mutated, to replace "unk" later
+        multiWords = [word.strip() for word in self.g.terminalSymbols]
 
-        #if we know the list of words that occur multiple times, then replace single occurrences with "<unk>"
-        #but keep track of words that we replace, so that final tree has original words
-        multiWords = [word.strip() for word in g.terminalSymbols]
-
-        for i,word in enumerate(self.text):
+        for i, word in enumerate(self.text):
             if word not in multiWords:
                 self.text[i] = "<unk>"
 
@@ -39,20 +29,59 @@ class CKYDecoder:
         self.success = True
 
 
+    def __init__(self,g):
+        self.nonTerms = set()            #set of non terminals
+        self.allProds = set()            #set of all productions
+        self.P = defaultdict(float)      #probabilities of productions
+        self.score = defaultdict(float)  #n^2|G| matrix to store DP results
+        self.backPointers = {}           #to back track
+        self.terminals = {}              #maps best non terminal to terminal ("word")
+
+        self.g = g
+        self.unaryRules = dict()
+        for r in g.rulesCount:
+            prob = r.minusLogProb
+            a = str(r.eLHS).strip()
+            b = str(r.eRHS).strip()
+            self.allProds.add((a,b))
+            self.P[(a,b)] = prob
+            if len(r.eRHS.symbols) == 1 and not r.isLexical:  # unary rule
+                if r.eRHS not in self.unaryRules and r.eRHS not in self.terminals:
+                    self.unaryRules[r.eRHS.symbols[0]] = set()
+                setOfLHS = self.unaryRules[r.eRHS.symbols[0]]
+                setOfLHS.add(r.eLHS.symbols[0])
+
+
+
 
     def addUnary(self,begin, end):
+        possible = []
         '''
         Adds unary productions A -> B. These need to be handled differently, since the algo splits B,C in A->BC
         '''
         for A in self.nonTerms:
             for B in self.nonTerms:
                 if (A,B) in self.allProds:
+                    possible.append((A,B))
                     prob = self.P[(A,B)] * self.score[(begin,end,B)]
         
                     if prob > self.score[(begin,end,A)]:
                         self.score[(begin, end, A)] = prob
                         self.backPointers[(begin, end, A)] = (B,)
-        
+
+        #print ("ds")
+
+    def addMinimizeUnary(self, begin, end, possibleNonTerminals, additionalSymbols):
+        for A in self.nonTerms:
+            for B in self.nonTerms:
+                if (A, B) in self.allProds:
+                    possible.append((A, B))
+                    prob = self.P[(A, B)] * self.score[(begin, end, B)]
+
+                    if prob > self.score[(begin, end, A)]:
+                        self.score[(begin, end, A)] = prob
+                        self.backPointers[(begin, end, A)] = (B,)
+
     
     def backtrack(self, n):
         if (0,n,'S') not in self.backPointers:
@@ -161,13 +190,7 @@ class CKYDecoder:
 
     def GetTree(self, g):
         self.nonTerms = g.nonTerminalSymbols
-        for r in g.rulesCount:
-            prob = r.minusLogProb    
-            a = str(r.eLHS).strip()
-            b = str(r.eRHS).strip()
-            self.allProds.add((a,b))
-            self.P[(a,b)] = prob
-        
+
         self.nonTerms = sorted(list(self.nonTerms))
 
         n = self.n
@@ -175,23 +198,32 @@ class CKYDecoder:
         for i in range(0,n):
             begin = i
             end = i + 1
-
+            possible_nonTerminals = set()
+            additional_symbols = dict()
             for A in self.nonTerms:
                 word = self.text[begin]
 
                 if (A,word) in self.allProds:
                     self.score[(begin,end,A)] = self.P[(A, word)]
                     self.terminals[(begin,end,A)] = word
+                    possible_nonTerminals.add(A)
+                    additional_symbols[A] = 0
 
 
-            self.addUnary(begin,end)
+            #self.addMinimizeUnary(begin,end, possible_nonTerminals, additional_symbols)
+            self.addUnary(begin, end)
 
         for span in range(2,n+1):
             for begin in range(0,n-span+1):
                 end = begin + span
+                possible_nonTerminals = set()
+                additional_symbols = dict()
                 for split in range(begin+1,end):
 
+
                     for A,X in self.allProds:
+                        possible_nonTerminals.add(A)
+                        additional_symbols[A] = 0
                         rhs = X.split()
                         if len(rhs) == 2:
                             B = rhs[0].strip()
@@ -204,7 +236,8 @@ class CKYDecoder:
                                 self.backPointers[(begin, end, A)] = (split, B, C)
 
 
-                self.addUnary(begin,end)
+                #self.addMinimizeUnary(begin,end, possible_nonTerminals, additional_symbols)
+                self.addUnary(begin, end)
 
         print('Done')
         return self.backtrack(len(self.text))
@@ -306,7 +339,8 @@ class Node():
                     for innerChild in rightChild.children:
                         innerChild.parent = self
         for child in self.children:
-            child.deBinarize()
+            if child is not None:
+                child.deBinarize()
 
 
 # Tree class

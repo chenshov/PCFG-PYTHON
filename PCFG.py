@@ -49,7 +49,7 @@ class Rule():
         self.eRHS = eRHS
         self.isLexical = False        
         self.isTop = False
-        self.minusLogProb = float('inf')
+        self.minusLogProb = -float('inf')
 
     def __hash__(self):
         s = str(self)
@@ -79,6 +79,8 @@ class Grammar():
             rules = self.getRules(t)
             self.addAll(rules)
             i += 1
+            if i % 100 == 0:
+                print("train for tree" + str(i))
                 
     def getRules(self, tree):
         rules = []
@@ -293,7 +295,8 @@ def train(binaryTreeBank):
     return grammar
 
 def decode(sentence, grammar):   
-    ckyDecoder = CKYDecoder(sentence, grammar)
+    ckyDecoder = CKYDecoder(grammar)
+    ckyDecoder.set_text(sentence)
     if ckyDecoder.success:
         return ckyDecoder.GetTree(grammar)
     
