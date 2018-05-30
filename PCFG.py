@@ -331,7 +331,7 @@ def PCFG(goldFile, trainFile, outputFile, markovOrder):
     print ("done parse")
     tts.binarize(markovOrder)
     print("done binarization")
-    grammar = loadGrammerFromFile(goldFile, trainFile, 0) #train(tts)
+    grammar = train(tts)
     print("done train")
     alltrees = TreeBank([])
     outputTreeBank = TreeBank([])
