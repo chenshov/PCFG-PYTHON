@@ -261,7 +261,7 @@ def parseTree(treeLine, debug = False):
                 print(n2.id)            
             continue
         n = s.pop(0)
-        n.addChild(Node(token,False,n,[]), span=(-1, -1))
+        n.addChild(Node(token,False,n,[]))
         s.insert(0,n) 
         if debug:
             print('space')
@@ -331,20 +331,33 @@ def PCFG(goldFile, trainFile, outputFile, markovOrder):
     print ("done parse")
     tts.binarize(markovOrder)
     print("done binarization")
-    grammar = train(tts) #loadGrammerFromFile(goldFile, trainFile, 0) #
+    grammar = loadGrammerFromFile(goldFile, trainFile, 0) #train(tts)
     print("done train")
+    alltrees = TreeBank([])
     outputTreeBank = TreeBank([])
     print("build grammar")
     ckyDecoder = CKYDecoder(grammar)
+    i = 0
+    with open(outputFile, 'r') as file:
+        j = len(file.readlines())
     for t in gts.trees:
+        if i < j:
+            i += 1
+            print("skip tree" + str(i))
+            continue
         tree = decode(t.root.getYield(), ckyDecoder)
-        outputTreeBank.trees.append(tree)
-        print(str(tree))
-    output(outputTreeBank, outputFile)
+        alltrees.trees.append(tree)
+        outputTreeBank.trees = [tree]
+        outputTreeBank.deBinarize()
+        print("finished decode tree " + str(i))
+        i += 1
+        with open(outputFile, 'a+') as f:
+            for t in outputTreeBank.trees:
+                print(str(tree)+"\n")
+                f.write(str(t))
+    output(outputTreeBank, "allOutput.txt")
 
 # bla
 if __name__ == "__main__":
     PCFG(sys.argv[1], sys.argv[2], "output.txt", 0)
-    #TrainAndwriteGrammarToFile(sys.argv[1], sys.argv[2], 0)
-    #gram = loadGrammerFromFile(sys.argv[1], sys.argv[2], 0)
     print('asd')

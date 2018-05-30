@@ -39,6 +39,7 @@ class CKYDecoder:
 
         self.g = g
         self.unaryRules = dict()
+        self.leftKeyUnary = dict()
         for r in g.rulesCount:
             prob = r.minusLogProb
             a = str(r.eLHS).strip()
@@ -48,8 +49,12 @@ class CKYDecoder:
             if len(r.eRHS.symbols) == 1 and not r.isLexical:  # unary rule
                 if r.eRHS not in self.unaryRules and r.eRHS not in self.terminals:
                     self.unaryRules[r.eRHS.symbols[0]] = set()
+                if r.eLHS not in self.leftKeyUnary:
+                    self.leftKeyUnary[r.eLHS.symbols[0]] = set()
+                setOfRHS = self.leftKeyUnary[r.eLHS.symbols[0]]
                 setOfLHS = self.unaryRules[r.eRHS.symbols[0]]
                 setOfLHS.add(r.eLHS.symbols[0])
+                setOfRHS.add(r.eRHS.symbols[0])
 
 
 
@@ -72,10 +77,27 @@ class CKYDecoder:
         #print ("ds")
 
     def addMinimizeUnary(self, begin, end, possibleNonTerminals, additionalSymbols):
+        my_list = list(possibleNonTerminals)
+        for nonTer in my_list:
+            if nonTer in self.unaryRules and additionalSymbols[nonTer] == 0:
+                setOfAllLHS = self.unaryRules[nonTer]
+                for LHS in setOfAllLHS:
+                    if (LHS, nonTer) in self.allProds:
+                        if LHS not in additionalSymbols:
+                            additionalSymbols[LHS] = 0
+                            my_list.append(LHS)
+                            prob = self.P[(LHS, nonTer)] * self.score[(begin, end, nonTer)]
+
+                            if prob > self.score[(begin, end, LHS)]:
+                                self.score[(begin, end, LHS)] = prob
+                                self.backPointers[(begin, end, LHS)] = (nonTer,)
+                additionalSymbols[nonTer] = 1
+
+
+    def addUnaryTakeTwo(self, begin, end):
         for A in self.nonTerms:
-            for B in self.nonTerms:
-                if (A, B) in self.allProds:
-                    possible.append((A, B))
+            if A in self.leftKeyUnary:
+                for B in self.leftKeyUnary[A]:
                     prob = self.P[(A, B)] * self.score[(begin, end, B)]
 
                     if prob > self.score[(begin, end, A)]:
@@ -205,24 +227,25 @@ class CKYDecoder:
                 if (A,word) in self.allProds:
                     self.score[(begin,end,A)] = self.P[(A, word)]
                     self.terminals[(begin,end,A)] = word
-                    possible_nonTerminals.add(A)
-                    additional_symbols[A] = 0
+                    #possible_nonTerminals.add(A)
+                    #additional_symbols[A] = 0
 
 
             #self.addMinimizeUnary(begin,end, possible_nonTerminals, additional_symbols)
             self.addUnary(begin, end)
+            #self.addUnaryTakeTwo(begin, end)
 
         for span in range(2,n+1):
             for begin in range(0,n-span+1):
                 end = begin + span
-                possible_nonTerminals = set()
-                additional_symbols = dict()
+                #possible_nonTerminals = set()
+                #additional_symbols = dict()
                 for split in range(begin+1,end):
 
 
                     for A,X in self.allProds:
-                        possible_nonTerminals.add(A)
-                        additional_symbols[A] = 0
+                        #possible_nonTerminals.add(A)
+                        #additional_symbols[A] = 0
                         rhs = X.split()
                         if len(rhs) == 2:
                             B = rhs[0].strip()
@@ -342,7 +365,7 @@ class Node():
                 child.deBinarize()
 
 
-# Tree classg
+# Tree class
 class Tree():
     def __init__(self, root):
         self.root = root
