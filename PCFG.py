@@ -296,11 +296,10 @@ def train(binaryTreeBank):
 
 def decode(sentence, ckyDecoder):
     ckyDecoder.set_text(sentence)
-    if ckyDecoder.success:
-        tree = ckyDecoder.GetTree()
-        top = Node("TOP", True, None, [tree])
+    tree = ckyDecoder.GetTree()
+    top = Node("TOP", True, None, [tree])
+    if top != None:
         return top
-    
     return DummyParser(sentence).GetTree()
 
 def output(treeBank, outputFile):
@@ -359,5 +358,5 @@ def PCFG(goldFile, trainFile, outputFile, markovOrder):
 
 # bla
 if __name__ == "__main__":
-    PCFG(sys.argv[1], sys.argv[2], "output.txt", 0)
+    PCFG(sys.argv[1], sys.argv[2], "output.txt", 1)
     print('asd')
