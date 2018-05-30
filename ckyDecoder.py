@@ -188,8 +188,8 @@ class CKYDecoder:
             return p
 
 
-    def GetTree(self, g):
-        self.nonTerms = g.nonTerminalSymbols
+    def GetTree(self):
+        self.nonTerms = self.g.nonTerminalSymbols
 
         self.nonTerms = sorted(list(self.nonTerms))
 

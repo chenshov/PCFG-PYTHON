@@ -1,0 +1,1 @@
+(TOP (S (NP (NP (NN TWPEH)) (ADJP (JJ ZW))) (VP (VB HTBRRH)) (ADVP (RB ATMWL)) (PP (IN B) (NP (NP (NP (NNT WWEDT) (NP (H H) (NN EBWDH))) (CC W) (NP (H H) (NN RWWXH))) (POS FL) (NP (NP (H H) (NN KNST)) (yyCM yyCM) (SBAR (REL F) (S (VP (VB DNH)) (PP (IN B) (NP (NNT NWFA) (NP (NP (NNT HESQT) (NP (NN EWBDIM))) (ADJP (JJ ZRIM)))))))))) (yyDOT yyDOT)))

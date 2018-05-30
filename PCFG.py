@@ -294,8 +294,7 @@ def train(binaryTreeBank):
     # grammar.CalcRulesProbsWithSmoothing()
     return grammar
 
-def decode(sentence, grammar):   
-    ckyDecoder = CKYDecoder(grammar)
+def decode(sentence, ckyDecoder):
     ckyDecoder.set_text(sentence)
     if ckyDecoder.success:
         return ckyDecoder.GetTree(grammar)
@@ -316,6 +315,8 @@ def PCFG(goldFile, trainFile, outputFile, markovOrder):
     grammar = train(tts)
     print ("done binarization")
     outputTreeBank = TreeBank([])
+    print("build grammar")
+    ckyDecoder = CKYDecoder(grammar)
     for t in gts.trees:
         outputTreeBank.trees.append(decode(t.root.getYield(),grammar))
     output(outputTreeBank, outputFile)
