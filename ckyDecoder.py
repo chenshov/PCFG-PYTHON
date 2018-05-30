@@ -225,8 +225,8 @@ class CKYDecoder:
                     additional_symbols[A] = 0
 
 
-            self.addMinimizeUnary(begin,end, possible_nonTerminals, additional_symbols)
-            #self.addUnary(begin, end)
+            #self.addMinimizeUnary(begin,end, possible_nonTerminals, additional_symbols)
+            self.addUnary(begin, end)
 
         for span in range(2,n+1):
             for begin in range(0,n-span+1):
@@ -250,7 +250,8 @@ class CKYDecoder:
                                 self.backPointers[(begin, end, A)] = (split, B, C)
 
 
-                self.addMinimizeUnary(begin,end, possible_nonTerminals, additional_symbols)
+                #self.addMinimizeUnary(begin,end, possible_nonTerminals, additional_symbols)
+                self.addUnary(begin, end)
 
         print('Done')
         return self.backtrack(len(self.text))
