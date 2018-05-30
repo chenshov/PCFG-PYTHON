@@ -354,7 +354,7 @@ def PCFG(goldFile, trainFile, outputFile, markovOrder):
         with open(outputFile, 'a+') as f:
             for t in outputTreeBank.trees:
                 print(str(tree)+"\n")
-                f.write(str(t))
+                f.write(str(t)+"\n")
     output(outputTreeBank, "allOutput.txt")
 
 # bla
