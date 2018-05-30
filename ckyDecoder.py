@@ -343,7 +343,7 @@ class Node():
                 child.deBinarize()
 
 
-# Tree class
+# Tree classg
 class Tree():
     def __init__(self, root):
         self.root = root
