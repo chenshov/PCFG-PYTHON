@@ -8,7 +8,7 @@ Created on Fri May 25 16:48:18 2018
 from ckyDecoder import *
 import math
 import sys
-
+import pickle
 # Treebank class
 
 
@@ -297,27 +297,54 @@ def train(binaryTreeBank):
 def decode(sentence, ckyDecoder):
     ckyDecoder.set_text(sentence)
     if ckyDecoder.success:
-        return ckyDecoder.GetTree(grammar)
+        tree = ckyDecoder.GetTree()
+        top = Node("TOP", True, None, [tree])
+        return top
     
     return DummyParser(sentence).GetTree()
 
 def output(treeBank, outputFile):
-     with open(outputFile,'w') as f:
-         treeBank.deBinarize()
-         for t in treeBank.trees:
-             f.write(str(t))
-    
+    treeBank.deBinarize()
+    with open(outputFile,'w') as f:
+        for t in treeBank.trees:
+            f.write(str(t))
+
+def TrainAndwriteGrammarToFile(goldFile, trainFile, markovOrder):
+    gts,tts = parse(goldFile, trainFile, 'output2.txt')
+    print("done parse")
+    tts.binarize(markovOrder)
+    print("done binarization")
+    grammar = train(tts)
+    print("done train")
+    filename = 'OT-' + 'grammar_order' + str(markovOrder) + '_.pkl'
+    with open(filename, 'wb') as output:
+        pickle.dump(grammar, output, pickle.HIGHEST_PROTOCOL)
+
+def loadGrammerFromFile(goldFile, trainFile, markovOrder):
+    filename = 'OT-' + 'grammar_order' + str(markovOrder) + '_.pkl'
+    with open(filename, 'rb') as input:
+        return pickle.load(input)
+
+
 def PCFG(goldFile, trainFile, outputFile, markovOrder):
     gts,tts = parse(goldFile, trainFile, outputFile)
     print ("done parse")
     tts.binarize(markovOrder)
-    print ("start train")
-    grammar = train(tts)
-    print ("done binarization")
+    print("done binarization")
+    grammar = train(tts) #loadGrammerFromFile(goldFile, trainFile, 0) #
+    print("done train")
     outputTreeBank = TreeBank([])
     print("build grammar")
     ckyDecoder = CKYDecoder(grammar)
     for t in gts.trees:
-        outputTreeBank.trees.append(decode(t.root.getYield(),grammar))
+        tree = decode(t.root.getYield(), ckyDecoder)
+        outputTreeBank.trees.append(tree)
+        print(str(tree))
     output(outputTreeBank, outputFile)
 
+# bla
+if __name__ == "__main__":
+    PCFG(sys.argv[1], sys.argv[2], "output.txt", 0)
+    #TrainAndwriteGrammarToFile(sys.argv[1], sys.argv[2], 0)
+    #gram = loadGrammerFromFile(sys.argv[1], sys.argv[2], 0)
+    print('asd')

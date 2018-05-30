@@ -85,7 +85,6 @@ class CKYDecoder:
     
     def backtrack(self, n):
         if (0,n,'S') not in self.backPointers:
-            #print "NONE"
             return None
 
         node = self._backtrack((0,n,'S'))
